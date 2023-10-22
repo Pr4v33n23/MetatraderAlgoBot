@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
-from logging import error
 
 from decouple import config
 
@@ -24,5 +22,5 @@ class MetatraderFactory:
                     METATRADER_ID, METATRADER_PASSWORD, METATRADER_SERVER
                 )
         except ConnectionError as e:
-            error(f"Failed to get metatrader connection, error: {e}")
+            print(f"Failed to get metatrader connection, error: {e}")
             raise ConnectionError("Failed to get metatrader connection,", e) from e
