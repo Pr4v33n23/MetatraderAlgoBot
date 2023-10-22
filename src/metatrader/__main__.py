@@ -4,3 +4,4 @@ metatrader = MetatraderFactory.get_metatrader()
 
 metatrader.connect()
 metatrader.disconnect()
+
