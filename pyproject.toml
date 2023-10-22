@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "metatrader"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+metatrader5 = "^5.0.45"
+python-decouple = "^3.8"
+matplotlib = "^3.8.0"
+pandas = "^2.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
