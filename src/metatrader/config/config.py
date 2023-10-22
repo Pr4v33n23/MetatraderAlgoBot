@@ -29,7 +29,7 @@ class ConfigMetatrader:
         else:
             print("Connected to Metatrader successfully.")
             return mt5
-
+        
     def disconnect(self):
         is_connected = mt5.initialize()
         if not is_connected:
