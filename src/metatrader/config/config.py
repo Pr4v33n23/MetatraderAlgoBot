@@ -15,17 +15,17 @@ class ConfigMetatrader:
         if self.metatrader_login_terminal_path:
             if not mt5.initialize(self.metatrader_login_terminal_path):
                 print(f"Failed to connect to Metatrader, Error: {mt5.last_error()}")
-                raise Exception("Failed to connect to Metatrader")
+                raise Exception("Failed to connect to Metatrader.")
         elif not mt5.initialize():
             print(f"Failed to connect to Metatrader, Error: {mt5.last_error()}")
-            raise Exception("Failed to connect to Metatrader")
+            raise Exception("Failed to connect to Metatrader.")
         elif not mt5.login(
             self.metatrader_login_id,
             self.metatrader_login_password,
             self.metatrader_login_server,
         ):
             print(f"Failed to connect to Metatrader, Error: {mt5.last_error()}")
-            raise Exception("Failed to connect to Metatrader")
+            raise Exception("Failed to connect to Metatrader.")
         else:
             print("Connected to Metatrader successfully.")
             return mt5
@@ -34,6 +34,8 @@ class ConfigMetatrader:
         is_connected = mt5.initialize()
         if not is_connected:
             print(f"Cannot disconnect unopened connection, Error: {mt5.last_error()}")
-            raise Exception(f"Cannot disconnect unopened connection")
+            raise Exception(f"Cannot disconnect unopened connection.")
         else:
             mt5.shutdown()
+            print("Disconnected from Metatrader.")
+
