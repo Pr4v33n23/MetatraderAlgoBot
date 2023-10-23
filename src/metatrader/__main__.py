@@ -6,7 +6,7 @@ import sqlite3
 from utils.factory import MetatraderFactory
 
 metatrader = MetatraderFactory.get_metatrader()
-sql_connection = sqlite3.connect('src\\metatrader\\data\\tickers_data.db')
+sql_connection = sqlite3.connect('./data/tickers_data.db') 
 
 sns.set_theme()
 
