@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from decouple import config
 
-from config.config import ConfigMetatrader
+from  metatrader.config.config import ConfigMetatrader
 
 
 @dataclass

@@ -1,9 +1,11 @@
 from dataclasses import dataclass, asdict
-from typing import Optional
+from typing import Optional, ClassVar
+
 import pandas as pd
 
-from model.order_status import OrderStatus
-from model.order_type import OrderType
+from metatrader.model.order_status import OrderStatus
+from metatrader.model.order_type import OrderType
+
 
 @dataclass
 class Position:
@@ -13,17 +15,17 @@ class Position:
     volume: int
     stop_loss: float
     take_profit: float
+    comment: str
     close_datetime: Optional[str] = None
     close_price: Optional[float] = None
-    profit: float = None
-    status: str = OrderStatus.Open
-    comment: str
+    profit: float = 0.0
+    status: str = OrderStatus.Open.value
 
     def close_position(self, close_datetime: str, close_price: float):
         """
         The function updates the status of a position to "closed" and calculates the profit based on the
         close price and volume.
-        
+
         :param close_datetime: The close_datetime parameter is a string that represents the date and
         time when the position was closed
         :type close_datetime: str
@@ -32,10 +34,10 @@ class Position:
         """
         self.close_datetime = close_datetime
         self.close_price = close_price
-        self.status = OrderStatus.Closed
+        self.status = OrderStatus.Closed.value
         self.profit = (
             (self.close_price - self.open_price) * self.volume
-            if self.order_type == OrderType.Buy
+            if self.order_type == OrderType.Buy.value
             else (self.open_price - self.close_price) * self.volume
         )
 
@@ -51,9 +53,9 @@ class Position:
 @dataclass
 class Strategy:
     starting_balance: float
-    volume: int
-    positions: list[Position] = []
+    positions: ClassVar[list[Position]] = []
     data: pd.DataFrame
+    risk_percentage: float
     trading_allowed: bool = True
 
     def get_positions_df(self) -> pd.DataFrame:
@@ -69,7 +71,7 @@ class Strategy:
     def add_position(self, position: Position) -> bool:
         """
         The function adds a position to a list and returns True.
-        
+
         :param position: The parameter "position" is of type "Position". It is an object that represents
         a position
         :type position: Position
@@ -81,7 +83,7 @@ class Strategy:
     def trade(self, drawdown: float, data: pd.Series):
         """
         The function checks if trading is allowed based on the drawdown and adds a position if allowed.
-        
+
         :param drawdown: The "drawdown" parameter is a float value that represents the drawdown level at
         which the trade should be executed. It is used to determine if a trade should be made based on
         the current signal and the drawdown level
@@ -94,21 +96,33 @@ class Strategy:
         self.trading_allowed = True
         if data.signal == drawdown:
             for position in self.positions:
-                if position.status == OrderStatus.Open and position.comment == drawdown:
+                if (
+                    position.status == OrderStatus.Open.value
+                    and position.comment == drawdown
+                ):
                     self.trading_allowed = False
                     break
             if self.trading_allowed:
+                volume = 0
+                if len(self.positions) == 0:
+                    volume = int(
+                        (self.starting_balance * self.risk_percentage) / data.close
+                    )
+                else:
+                    df = self.get_positions_df()
+                    volume = int((df["pnl"].iat[-1] * self.risk_percentage) / data.close)
                 self.add_position(
                     Position(
                         data.time,
                         data.close,
-                        OrderType.Buy,
-                        self.volume,
+                        OrderType.Buy.value,
+                        volume,
                         0.0,
                         0.0,
-                        drawdown
+                        drawdown,
                     )
                 )
+
     def run(self):
         """
         The function iterates through a dataset, performs trades based on certain conditions, and closes
@@ -116,15 +130,19 @@ class Strategy:
         :return: the result of calling the method `get_positions_df()` on the object `self`.
         """
         for i, data in self.data.iterrows():
+            self.trade(">10% dd", data)
+            self.trade(">15% dd", data)
             self.trade(">20% dd", data)
             self.trade(">25% dd", data)
             self.trade(">30% dd", data)
 
             if data.drawdown == 0.0:
                 for position in self.positions:
-                    if position.status == OrderStatus.Open:
+                    if position.status == OrderStatus.Open.value:
                         position.close_position(data.time, data.close)
         return self.get_positions_df()
-    
 
-        
+    def calculate_volume(
+        self, pnl: float, risk_percentage: float, open_price: float
+    ) -> int:
+        return int((pnl * risk_percentage) / open_price)

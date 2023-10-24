@@ -1,5 +1,7 @@
-from enum import StrEnum
 
-class OrderType(StrEnum):
+from enum import Enum
+
+
+class OrderType(str, Enum):
     Buy = 'buy'
     Sell = 'sell'
