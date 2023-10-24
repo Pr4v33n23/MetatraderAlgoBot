@@ -70,10 +70,11 @@ class EMACrossover:
 
                 print("order_result: ", order_result)
 
-    def check_allowed_trading_hours(self):
-        if 1 < datetime.now().hour < 23:
+    def check_allowed_trading_hours(self, hour):
+        if 1 < hour < 23:
             return True
         else:
+            print(f"Current server hour: {hour} - No Trade Zone")
             return False
 
     def market_order(self, symbol, volume, order_type, deviation=20, magic=12345):
@@ -113,41 +114,58 @@ class EMACrossover:
     def run_strategy(self):
         account_info = self.mt5.account_info()
         print(
-                datetime.now(),
-                "| Login: ",
-                account_info.login,
-                "| Balance: ",
-                account_info.balance,
-                "| Equity: ",
-                account_info.equity,
+            datetime.now(),
+            "| Login: ",
+            account_info.login,
+            "| Balance: ",
+            account_info.balance,
+            "| Equity: ",
+            account_info.equity,
         )
 
         while True:
-            
-            usd_positions=self.mt5.positions_get(group="*USD*")
-            if usd_positions==None:
-                print("No positions with group=\"*USD*\", error code={}".format(self.mt5.last_error()))
-            elif len(usd_positions)>0:
-                print("positions_get(group=\"*USD*\")={}".format(len(usd_positions)))
+            usd_positions = self.mt5.positions_get(group="*USD*")
+            if usd_positions == None:
+                print(
+                    'No positions with group="*USD*", error code={}'.format(
+                        self.mt5.last_error()
+                    )
+                )
+            elif len(usd_positions) > 0:
                 # display these positions as a table using pandas.DataFrame
-                df=pd.DataFrame(list(usd_positions),columns=usd_positions[0]._asdict().keys())
-                df['time'] = pd.to_datetime(df['time'], unit='s')
-                df.drop(['time_update', 'time_msc', 'time_update_msc', 'external_id'], axis=1, inplace=True)
-                print(tabulate(df, headers="keys", tablefmt="psql"))
+                df = pd.DataFrame(
+                    list(usd_positions), columns=usd_positions[0]._asdict().keys()
+                )
+                df["time"] = pd.to_datetime(df["time"], unit="s")
+                df.drop(
+                    [
+                        "time_update",
+                        "time_msc",
+                        "time_update_msc",
+                        "external_id",
+                        "type",
+                        "magic",
+                        "identifier",
+                    ],
+                    axis=1,
+                    inplace=True,
+                )
+                print(tabulate(df, headers="keys", tablefmt="github"))
 
             num_positions = self.mt5.positions_total()
 
-            if not self.check_allowed_trading_hours():
-                self.close_positions("all")
-
             lookback_period = 100
             data = self.get_data(self.symbol, self.mt5.TIMEFRAME_M5, lookback_period)
-
             fast_ema = data["ema_10"].iloc[-1]
             slow_ema = data["ema_20"].iloc[-1]
-            if fast_ema > slow_ema :
+
+            hour = data["time"].dt.hour.iloc[-1]
+            if not self.check_allowed_trading_hours(hour):
+                self.close_positions("all")
+
+            if fast_ema > slow_ema:
                 self.close_positions(OrderType.Sell.value)
-                if num_positions == 0 and self.check_allowed_trading_hours():
+                if num_positions == 0 and self.check_allowed_trading_hours(hour):
                     order_result = self.market_order(
                         self.symbol, self.volume, OrderType.Buy.value
                     )
@@ -156,7 +174,7 @@ class EMACrossover:
             elif fast_ema < slow_ema:
                 self.close_positions(OrderType.Buy.value)
 
-                if num_positions == 0 and self.check_allowed_trading_hours():
+                if num_positions == 0 and self.check_allowed_trading_hours(hour):
                     order_result = self.market_order(
                         self.symbol, self.volume, OrderType.Sell.value
                     )
