@@ -70,6 +70,8 @@ class EMACrossover:
 
                 print("order_result: ", order_result)
 
+    # During market rollover, we will see lot of slippage on price.
+    # To avoid that, we should not trade in those timeframe.
     def check_allowed_trading_hours(self, hour):
         if 1 < hour < 23:
             return True
