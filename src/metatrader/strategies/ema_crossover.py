@@ -11,8 +11,8 @@ from metatrader.model.order_type import OrderType
 @dataclass
 class EMACrossover:
     mt5: MT
-    volume: float = 0.1
-    symbol: str = "EURUSD"
+    volume: float = 0.5
+    symbol: str = "SP500"
     deviation: int = 20
     strategy_name: str = "ema_crossover"
 
@@ -108,6 +108,7 @@ class EMACrossover:
         }
 
         order_result = self.mt5.order_send(request)
+        print(self.mt5.last_error())
         result_dict = order_result._asdict()
         for field in result_dict.keys():
             print("{}={}".format(field, result_dict[field]))
@@ -182,4 +183,4 @@ class EMACrossover:
                     )
                     print(order_result)
 
-            time.sleep(1)
+            time.sleep(5)
