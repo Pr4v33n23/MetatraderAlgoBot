@@ -11,7 +11,7 @@ from metatrader.model.order_type import OrderType
 @dataclass
 class EMACrossover:
     mt5: MT
-    volume: float = 0.5
+    volume: float = 1.0
     symbol: str = "SP500"
     deviation: int = 20
     strategy_name: str = "ema_crossover"
@@ -73,7 +73,7 @@ class EMACrossover:
     # During market rollover, we will see lot of slippage on price.
     # To avoid that, we should not trade in those timeframe.
     def check_allowed_trading_hours(self, hour):
-        if 1 < hour < 23:
+        if 14 < hour < 23:
             return True
         else:
             print(f"Current server hour: {hour} - No Trade Zone")
